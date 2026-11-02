@@ -1,92 +1,108 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
+import { useState, FormEvent } from "react";
+import { signIn } from "@/lab/auth-client";
 import { useRouter } from "next/navigation";
-import { authClient } from "@/lab/auth-client";
-
+import { toast } from "sonner";
+import Link from "next/link";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
   const router = useRouter();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError("");
+    setLoading(true);
 
     try {
-      const response = await authClient.signIn.email({
-        email,
-        password,
-      });
-
-      if (response.error) {
-        setError(response.error.message || "Invalid email or password");
-      } else {
-        router.push("/");
-      }
+      await signIn.email(
+        {
+          email,
+          password,
+        },
+        {
+          onSuccess: () => {
+            toast.success("Logged in successfully!");
+            router.push("/");
+          },
+          onError: (ctx) => {
+            toast.error(ctx.error.message || "Invalid email or password");
+          },
+        }
+      );
     } catch {
-      setError("Something went wrong. Please try again.");
+      toast.error("An unexpected error occurred during login.");
+    } finally {
+      setLoading(false);
     }
   };
 
+  const handleGoogleLogin = async () => {
+    await signIn.social({
+      provider: "google",
+      callbackURL: "/",
+    });
+  };
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-6 bg-slate-50">
-      <div className="bg-white p-8 rounded-xl shadow-md w-full max-w-md">
-        <h1 className="text-2xl font-bold text-center text-slate-800 mb-6">
-          Login to BookNook 📚
-        </h1>
+    <div className="flex min-h-[80vh] items-center justify-center px-4">
+      <div className="w-full max-w-md bg-white p-8 rounded-xl shadow-md border">
+        <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">Login to BookNook</h2>
 
-        {error && (
-          <div className="mb-4 p-3 bg-red-100 text-red-600 rounded-lg text-sm text-center">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleLogin} className="flex flex-col gap-4">
+        <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Email Address
-            </label>
-            <input
-              type="email"
+            <label className="block text-sm font-medium text-gray-700">Email</label>
+            <input 
+              type="email" 
+              required 
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              required
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800"
+              className="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+              placeholder="user@example.com"
             />
           </div>
+
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Password
-            </label>
-            <input
-              type="password"
+            <label className="block text-sm font-medium text-gray-700">Password</label>
+            <input 
+              type="password" 
+              required 
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              className="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
               placeholder="••••••••"
-              required
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800"
             />
           </div>
-          <button
-            type="submit"
-            className="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition font-medium mt-2"
+
+          <div className="text-right">
+            <a href="#" className="text-xs text-indigo-600 hover:underline">Forgot password?</a>
+          </div>
+
+          <button 
+            type="submit" 
+            disabled={loading}
+            className="w-full py-2 px-4 bg-indigo-600 text-white font-medium rounded-md hover:bg-indigo-700 transition disabled:opacity-50"
           >
-            Sign In
+            {loading ? "Logging in..." : "Login"}
           </button>
         </form>
 
-        <p className="text-center text-sm text-slate-600 mt-4">
-          Don&apos;t have an account?{" "}
-          <Link href="/register" className="text-indigo-600 font-medium hover:underline">
-            Sign up here
-          </Link>
+        <div className="mt-4">
+          <button 
+            type="button"
+            onClick={handleGoogleLogin}
+            className="w-full py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 flex items-center justify-center space-x-2"
+          >
+            <span>Sign in with Google</span>
+          </button>
+        </div>
+
+        <p className="mt-6 text-center text-sm text-gray-600">
+          Don&apos;t have an account? <Link href="/register" className="text-indigo-600 font-medium hover:underline">Register</Link>
         </p>
       </div>
-    </main>
+    </div>
   );
 }

@@ -1,109 +1,141 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
+import { useState, FormEvent } from "react";
+import { signUp, signIn } from "@/lab/auth-client"; 
 import { useRouter } from "next/navigation";
-import { authClient } from "@/lab/auth-client";
+import { toast } from "sonner";
+import Link from "next/link";
 
 export default function RegisterPage() {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [name, setName] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
+  const [image, setImage] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
   const router = useRouter();
 
-  const handleRegister = async (e: React.FormEvent) => {
+  const handleRegister = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError("");
+
+    const hasUppercase = /[A-Z]/.test(password);
+    const hasLowercase = /[a-z]/.test(password);
+    const isValidLength = password.length >= 6;
+
+    if (!hasUppercase || !hasLowercase || !isValidLength) {
+      toast.error("Password must contain at least 1 uppercase letter, 1 lowercase letter, and be at least 6 characters long.");
+      return;
+    }
+
+    setLoading(true);
 
     try {
-      const response = await authClient.signUp.email({
-        email,
-        password,
-        name,
-      });
-
-      if (response.error) {
-        setError(response.error.message || "Registration failed");
-      } else {
-        router.push("/");
-      }
+      await signUp.email(
+        {
+          email,
+          password,
+          name,
+          image: image || "https://i.ibb.co/5GzXkwq/user.png",
+        },
+        {
+          onSuccess: () => {
+            toast.success("Registration successful!");
+            router.push("/");
+          },
+          onError: (ctx) => {
+            toast.error(ctx.error.message || "Failed to register account.");
+          },
+        }
+      );
     } catch {
-      setError("Something went wrong. Please try again.");
+      toast.error("An unexpected error occurred during registration.");
+    } finally {
+      setLoading(false);
     }
   };
 
+  const handleGoogleLogin = async () => {
+    await signIn.social({
+      provider: "google",
+      callbackURL: "/",
+    });
+  };
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-6 bg-slate-50">
-      <div className="bg-white p-8 rounded-xl shadow-md w-full max-w-md">
-        <h1 className="text-2xl font-bold text-center text-slate-800 mb-6">
-          Create a BookNook Account 📚
-        </h1>
+    <div className="flex min-h-[85vh] items-center justify-center px-4 py-8">
+      <div className="w-full max-w-md bg-white p-8 rounded-xl shadow-md border">
+        <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">Create a BookNook Account</h2>
 
-        {error && (
-          <div className="mb-4 p-3 bg-red-100 text-red-600 rounded-lg text-sm text-center">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleRegister} className="flex flex-col gap-4">
+        <form onSubmit={handleRegister} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Your Name
-            </label>
-            <input
-              type="text"
+            <label className="block text-sm font-medium text-gray-700">Full Name</label>
+            <input 
+              type="text" 
+              required 
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Amir Hamza"
-              required
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800"
+              className="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+              placeholder="John Doe"
             />
           </div>
+
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Email Address
-            </label>
-            <input
-              type="email"
+            <label className="block text-sm font-medium text-gray-700">Email</label>
+            <input 
+              type="email" 
+              required 
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              required
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800"
+              className="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+              placeholder="user@example.com"
             />
           </div>
+
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Password
-            </label>
-            <input
-              type="password"
+            <label className="block text-sm font-medium text-gray-700">Photo URL (Imgbb / Postimage)</label>
+            <input 
+              type="url" 
+              value={image}
+              onChange={(e) => setImage(e.target.value)}
+              className="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+              placeholder="https://i.ibb.co/... (optional)"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Password</label>
+            <input 
+              type="password" 
+              required 
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              required
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800"
+              className="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+              placeholder="At least 6 chars, 1 uppercase, 1 lowercase"
             />
           </div>
-          <button
-            type="submit"
-            className="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition font-medium mt-2"
+
+          <button 
+            type="submit" 
+            disabled={loading}
+            className="w-full py-2 px-4 bg-indigo-600 text-white font-medium rounded-md hover:bg-indigo-700 transition disabled:opacity-50"
           >
-            Sign Up
+            {loading ? "Registering..." : "Register"}
           </button>
         </form>
 
-        <p className="text-center text-sm text-slate-600 mt-4">
-          Already have an account?{" "}
-          <Link
-            href="/login"
-            className="text-indigo-600 font-medium hover:underline"
+        <div className="mt-4">
+          <button 
+            type="button"
+            onClick={handleGoogleLogin}
+            className="w-full py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 flex items-center justify-center space-x-2"
           >
-            Login here
-          </Link>
+            <span>Sign up with Google</span>
+          </button>
+        </div>
+
+        <p className="mt-6 text-center text-sm text-gray-600">
+          Already have an account? <Link href="/login" className="text-indigo-600 font-medium hover:underline">Login</Link>
         </p>
       </div>
-    </main>
+    </div>
   );
 }
