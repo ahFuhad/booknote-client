@@ -386,13 +386,68 @@ td {
 .detail .btn:disabled {
   opacity: 0.5;
 }
+
+.hamburger-btn {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: inherit;
+}
+
+.mobile-auth-section {
+  display: none;
+}
+
 @media (max-width: 800px) {
   .nav {
     padding: 0 18px;
+    position: relative;
+    display: flex;
+    justify-content: space-between !important;
+    align-items: center;
+    gap: 0 !important;
   }
+
+  .hamburger-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto;
+  }
+
+  .desktop-auth-section {
+    display: none !important;
+  }
+
   .nav nav {
     display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #ffffff;
+    flex-direction: column;
+    padding: 20px 24px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+    border-bottom: 1px solid #eaeaea;
+    gap: 16px;
+    z-index: 999;
   }
+
+  .nav nav.open {
+    display: flex;
+  }
+
+  .mobile-auth-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    border-top: 1px solid #eaeaea;
+    padding-top: 15px;
+    margin-top: 5px;
+  }
+
   .grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -412,6 +467,7 @@ td {
     height: 500px;
   }
 }
+
 @media (max-width: 520px) {
   .grid {
     grid-template-columns: 1fr;

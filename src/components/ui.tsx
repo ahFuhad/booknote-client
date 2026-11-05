@@ -2,7 +2,9 @@
 import Link from "next/link";
 import { useSession, signOut } from "@/lib/auth-client";
 import { Toaster, toast } from "sonner";
-import { BookOpen } from "lucide-react";
+import { BookOpen, Menu, X } from "lucide-react";
+import { useState } from "react";
+
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <>
@@ -11,26 +13,62 @@ export function Providers({ children }: { children: React.ReactNode }) {
     </>
   );
 }
+
 export function Nav() {
   const { data } = useSession();
   const user = data?.user;
+  const [isOpen, setIsOpen] = useState(false);
+
+  const closeMenu = () => setIsOpen(false);
+
   return (
     <header className="nav">
-      <Link href="/" className="logo">
+      <Link href="/" className="logo" onClick={closeMenu}>
         <BookOpen /> booknote<span>.</span>
       </Link>
-      <nav>
-        <Link href="/">Home</Link>
-        <Link href="/books">All Books</Link>
+
+      <button 
+        type="button"
+        className="hamburger-btn" 
+        onClick={() => setIsOpen(!isOpen)}
+        aria-label="Toggle menu"
+      >
+        {isOpen ? <X size={24} /> : <Menu size={24} />}
+      </button>
+
+      <nav className={isOpen ? "open" : ""}>
+        <Link href="/" onClick={closeMenu}>Home</Link>
+        <Link href="/books" onClick={closeMenu}>All Books</Link>
         {user && (
           <>
-            <Link href="/add-book">Add Book</Link>
-            <Link href="/my-books">My Books</Link>
-            <Link href="/my-borrows">My Borrows</Link>
+            <Link href="/add-book" onClick={closeMenu}>Add Book</Link>
+            <Link href="/my-books" onClick={closeMenu}>My Books</Link>
+            <Link href="/my-borrows" onClick={closeMenu}>My Borrows</Link>
           </>
         )}
+
+        <div className="mobile-auth-section">
+          {user ? (
+            <button
+              onClick={async () => {
+                await signOut();
+                location.href = "/";
+              }}
+            >
+              Log out
+            </button>
+          ) : (
+            <>
+              <Link href="/login" onClick={closeMenu}>Log in</Link>
+              <Link className="btn" href="/register" onClick={closeMenu}>
+                Register
+              </Link>
+            </>
+          )}
+        </div>
       </nav>
-      <div>
+
+      <div className="desktop-auth-section">
         {user ? (
           <button
             onClick={async () => {
@@ -52,6 +90,7 @@ export function Nav() {
     </header>
   );
 }
+
 export function Foot() {
   return (
     <footer>
@@ -65,6 +104,7 @@ export function Foot() {
     </footer>
   );
 }
+
 export function Guard({ children }: { children: React.ReactNode }) {
   const { data, isPending } = useSession();
   if (isPending) return <p className="loading">Loading your library…</p>;
@@ -76,6 +116,7 @@ export function Guard({ children }: { children: React.ReactNode }) {
   }
   return <>{children}</>;
 }
+
 export function Card({ book }: { book: any }) {
   return (
     <article className="card">
@@ -84,11 +125,12 @@ export function Card({ book }: { book: any }) {
       <h3>{book.title}</h3>
       <p>by {book.author}</p>
       <Link className="textlink" href={`/books/${book._id || book.id}`}>
-        View details ↗
+        View details 
       </Link>
     </article>
   );
 }
+
 export function ErrorToast({ message }: { message: string }) {
   toast.error(message);
   return null;
