@@ -1,13 +1,15 @@
 "use client";
 import Link from "next/link";
-import { FormEvent, useState } from "react";
+import { FormEvent, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "@/lib/auth-client";
 import { toast } from "sonner";
-export default function Login() {
-  const router = useRouter(),
-    params = useSearchParams();
+
+function LoginForm() {
+  const router = useRouter();
+  const params = useSearchParams();
   const [busy, B] = useState(false);
+
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     B(true);
@@ -21,6 +23,7 @@ export default function Login() {
     toast.success("Welcome back!");
     router.push(params.get("callbackUrl") || "/");
   }
+
   return (
     <div className="auth">
       <small className="kicker">WELCOME BACK, READER</small>
@@ -45,6 +48,7 @@ export default function Login() {
         </button>
       </form>
       <button
+        type="button"
         className="google"
         onClick={() => signIn.social({ provider: "google", callbackURL: "/" })}
       >
@@ -54,5 +58,13 @@ export default function Login() {
         New here? <Link href="/register">Create an account</Link>
       </p>
     </div>
+  );
+}
+
+export default function Login() {
+  return (
+    <Suspense fallback={<div className="auth">Loading...</div>}>
+      <LoginForm />
+    </Suspense>
   );
 }
