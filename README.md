@@ -47,8 +47,6 @@ BookNote is a modern online library platform where users can explore books, mana
 - JWT authentication
 - MongoDB
 
-## Getting Started
-
 ## Authentication
 
 BookNote uses Better Auth for user authentication.
@@ -61,7 +59,6 @@ Supported authentication methods:
 The frontend also integrates with the backend's JWT-protected API.
 
 For Google sign-in, configure the OAuth client in Google Cloud Console and add the appropriate local and production callback URLs.
-
 
 ## Deployment
 
